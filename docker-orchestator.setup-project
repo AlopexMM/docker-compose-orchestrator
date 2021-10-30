@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# Voy a preparar un menu luego de la verificacion de docker
+# Este debe consultar si es un proyecto laravel o NodeJS
+# Luego el tipo de base de datos 
+# Y todos deben incluir mailhog
+WHITE='\033[1;37m'
+NC='\033[0m'
+
+LARAVEL="0"
+MYSQL="0"
+PGSQL="0"
+MONGODB="0"
+NODE="0"
+DOCKER_ORCHESTRATOR="${HOME}/docker-orchestrator"
+
+function delimiter(){
+    echo -e "\n"
+    echo "-------------------------------"
+    echo -e "\n"
+}
+
+COMMAND=`which docker`
+
+if [[ $? == 1 ]]; then
+    echo -e "${WHITE} Docker no se encuentra instalado ${NC}\n"
+    echo -e "Puede ver la documentacion en ${WHITE}https://docs.docker.com/engine/install/${NC}\n"
+    exit 0
+fi
+
+COMMAND=`which docker-compose`
+
+if [[ $? == 1 ]]; then
+    echo -e "${WHITE} Docker compose no se encuentra instalado ${NC}\n"
+    echo -e "Puede ver la documentacion en ${WHITE}https://docs.docker.com/engine/install/${NC}\n"
+    exit 0
+fi
+
+# Imprimimos el primer menu consultando el nombre del proyecto
+# Creamos la carpeta con el nombre del proyecto y la carpeta hija src donde se
+# aloja el codigo de la app
+echo "Nombre del proyecto?"
+read -p "Si lo deja vacio por defecto se nombre example-app: " PROJECT_NAME
+if [[ ${PROJECT_NAME} == "" ]]; then
+    PROJECT_NAME="example-app"
+fi
+
+mkdir -p "${PWD}/${PROJECT_NAME}/src"
+
+delimiter
+
+# Imprimimos el segundo menu consultando la tecnologia del proyecto
+# Se copia el Dockerfile correspondiente
+echo "Que tecnologia se utilizara en el proyecto?"
+echo -e "[1] ${WHITE}NodeJS${NC}\n"
+echo -e "[2] ${WHITE}Laravel${NC}\n"
+read -p "Informe el nro de la tecnologia: " TECNOLOGY
+case ${TECNOLOGY} in
+    "1"|1)
+        NODE=1
+        ;;
+    "2"|2)
+        LARAVEL=1
+        mkdir -p "${PWD}/${PROJECT_NAME}/nginx"
+        ;;
+    *)
+        echo -n "${WHITE}No informo una opcion valida${NC}\n"
+        exit 0
+        ;;
+esac
+
+delimiter
+
+# Imprimimos el tercer menu consultando la base de datos
+# Se crea la carpeta de persistencia de la base de datos
+echo "Que base de datos se utilizara en el proyecto?"
+echo -e "[1] ${WHITE}MySQL${NC}\n"
+echo -e "[2] ${WHITE}Postgres${NC}\n"
+echo -e "[3] ${WHITE}Mongodb${NC}\n"
+
+read -p "Informe el nro de la base de datos: " DATABASE
+case ${DATABASE} in
+    "1"|1)
+        MYSQL=1
+        mkdir -p "${PWD}/${PROJECT_NAME}/mysql"
+        if [[ ${LARAVEL} == 1 ]]; then
+            cp "${DOCKER_ORCHESTRATOR}/laravel-mysql/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
+            cp "${DOCKER_ORCHESTRATOR}/laravel-mysql/Dockerfile" "${PWD}/${PROJECT_NAME}/Dockerfile"
+        elif [[ ${NODE} == 1 ]]; then
+            cp "${DOCKER_ORCHESTRATOR}/node-mysql/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
+        fi
+        ;;
+    "2"|2)
+        PGSQL=1
+        mkdir -p "${PWD}/${PROJECT_NAME}/pgsql"
+        if [[ ${LARAVEL} == 1 ]]; then
+            cp "${DOCKER_ORCHESTRATOR}/laravel-pgsql/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
+            cp "${DOCKER_ORCHESTRATOR}/laravel-mysql/Dockerfile" "${PWD}/${PROJECT_NAME}/Dockerfile"
+        elif [[ ${NODE} == 1 ]]; then
+            cp "${DOCKER_ORCHESTRATOR}/node-pgsql/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
+        fi
+        ;;
+    "3"|3)
+        MONGODB=1
+        mkdir -p "${PWD}/${PROJECT_NAME}/mongodb"
+        if [[ ${LARAVEL} == 1 ]]; then
+            cp "${DOCKER_ORCHESTRATOR}/laravel-mongodb/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
+            cp "${DOCKER_ORCHESTRATOR}/laravel-mysql/Dockerfile" "${PWD}/${PROJECT_NAME}/Dockerfile"
+        elif [[ ${NODE} == 1 ]]; then
+            cp "${DOCKER_ORCHESTRATOR}/node-mongodb/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
+        fi
+        ;;
+    *)
+        echo -n "${WHITE}No informo una opcion valida${NC}\n"
+        exit 0
+        ;;
+esac
+
+delimiter
+
+# TODO crear un archivo env-proyecto que contenga los valores basicos para
+# correr docker-compose
