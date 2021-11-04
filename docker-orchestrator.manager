@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+# Debe verificar que docker este funcionando en caso de que no informa que no se lo encuentra y se termina el programa
+# Tiene que buscar si existe el archivo env si no lo tiene consulta las
+# caracteristicas del proyecto y crea uno por defecto
+
+DOCKER_ORCHESTRATOR="${HOME}/docker-orchestrator"
+source "${DOCKER_ORCHESTRATOR}/lib"
+VARIABLES_ENTORNO="${PWD}/.variables_entorno"
+
+function help_docker-orchestrator(){
+    echo "La funciones que actualmente posee docker-orchestrator.manager son:"
+    echo ""
+    echo -e "${WHITE}up${NC}:\n\tCon este comando tomara los datos de .variables_entorno\n\ty levantara el entorno configurado en ${WHITE}docker-compose.yml${NC}\n\tPor ejemplo:\n\t\t${WHITE}docker-orchestrator.manager up${NC}\n\t\t${WHITE}docker-orchestrator.manager up -d${NC} no muestra el proceso de creacion del entorno y libera la consola para poder seguir usandola\n"
+}
+
+function export_variable(){
+    while IFS= read line
+    do
+        export ${line}
+    done < ${VARIABLES_ENTORNO}
+}
+docker_status
+
+case $1 in
+    "up")
+        # Mostramos las variables de entorno que se van a utilizar
+        echo -e "${WHITE}+++++++++++++++++++++++++++++++${NC}\n"
+        cat "${VARIABLES_ENTORNO}"
+        echo -e "${WHITE}+++++++++++++++++++++++++++++++${NC}\n"
+        # Exportamos las variables de entorno
+        #export_variable
+        # Comprueba que no este funcionando un entorno ya
+        export_variable
+        if docker-compose --env-file "${VARIABLES_ENTORNO}" ps | grep ${PROJECT_NAME} | grep 'Exit'; then
+            echo -e "${WHITE}Apagando viejos entornos${NC}"
+            docker-compose --env-file "${VARIABLES_ENTORNO}" down > /dev/null 2>&1
+        fi
+
+        if [[ $2 != "" ]]; then
+            docker-compose --env-file "${VARIABLES_ENTORNO}" up $2
+            docker-compose --env-file "${VARIABLES_ENTORNO}" ps
+        else
+            docker-compose --env-file "${VARIABLES_ENTORNO}" up
+        fi
+        ;;
+    "down")
+        docker-compose --env-file "${VARIABLES_ENTORNO}" down
+        ;;
+    "ps")
+        docker-compose --env-file "${VARIABLES_ENTORNO}" ps
+        ;;
+    "clean")
+        docker rm $(docker ps -qa) 2> /dev/null
+        docker rmi $(docker images -q) 2> /dev/null
+        clear
+        echo "Finalizo la limpieza"
+        ;;
+    "help"|*)
+        help_docker-orchestrator
+        ;;
+esac

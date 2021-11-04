@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Contiene los comandos para utilizar composer desde docker si no lo tienen instalado
+DOCKER_ORCHESTRATOR="${HOME}/docker-orchestrator"
+PROJECT_LOCATION=${PWD}
+source "${DOCKER_ORCHESTRATOR}/lib"
+
+docker_status
+
+COMPOSER="docker run --rm --interactive --tty --volume $PWD:/app --user $(id -u):$(id -g) composer"
+#COMPOSER="docker run --rm --interactive --tty --volume $PWD:/app composer"
+
+for arg in $@
+do
+    COMPOSER="${COMPOSER} $arg"
+done
+
+exec ${COMPOSER}

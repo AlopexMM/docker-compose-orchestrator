@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+WHITE='\033[1;37m'
+NC='\033[0m'
+
+function docker_status(){
+    if ! docker info > /dev/null 2>&1; then
+        echo -e "${WHITE}Docker no esta corriendo.${NC}\n"
+        echo -e "Puede inicializarlo corriendo ${WHITE}sudo systemctl start docker${NC}"
+        exit 1
+    fi
+}
+
+function delimiter(){
+    echo "========================="
+}

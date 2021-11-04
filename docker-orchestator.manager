@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-# Debe verificar que docker este funcionando en caso de que no informa que no se lo encuentra y se termina el programa
-# Tiene que buscar si existe el archivo env si no lo tiene consulta las
-# caracteristicas del proyecto y crea uno por defecto

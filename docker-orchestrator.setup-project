@@ -3,22 +3,14 @@
 # Este debe consultar si es un proyecto laravel o NodeJS
 # Luego el tipo de base de datos 
 # Y todos deben incluir mailhog
-WHITE='\033[1;37m'
-NC='\033[0m'
 
-LARAVEL="0"
-MYSQL="0"
-PGSQL="0"
-MONGODB="0"
-NODE="0"
 DOCKER_ORCHESTRATOR="${HOME}/docker-orchestrator"
-
-function delimiter(){
-    echo -e "\n"
-    echo "-------------------------------"
-    echo -e "\n"
-}
-
+source "${DOCKER_ORCHESTRATOR}/lib"
+LARAVEL=0
+MYSQL=0
+PGSQL=0
+MONGODB=0
+NODE=0
 COMMAND=`which docker`
 
 if [[ $? == 1 ]]; then
@@ -39,7 +31,7 @@ fi
 # Creamos la carpeta con el nombre del proyecto y la carpeta hija src donde se
 # aloja el codigo de la app
 echo "Nombre del proyecto?"
-read -p "Si lo deja vacio por defecto se nombre example-app: " PROJECT_NAME
+read -p "Si lo deja vacio por defecto el nombre es example-app: " PROJECT_NAME
 if [[ ${PROJECT_NAME} == "" ]]; then
     PROJECT_NAME="example-app"
 fi
@@ -47,6 +39,32 @@ fi
 mkdir -p "${PWD}/${PROJECT_NAME}/src"
 
 delimiter
+
+# Nginx
+APP_PORT="8888"
+
+# MySQL
+MYSQL_DATABASE="${PROJECT_NAME}"
+MYSQL_USER="usuario"
+MYSQL_PASSWORD="password"
+MYSQL_ROOT_PASSWORD="rootpassword"
+FORDWARD_MYSQL_PORT="33069"
+
+# Postgres
+POSTGRES_DATABASE="${PROJECT_NAME}"
+POSTGRES_USER="usuario"
+POSTGRES_PASSWORD="password"
+FORDWARD_PGSQL_PORT="54329"
+
+# Mongodb
+MONGO_INITDB_USERNAME="usuario"
+MONGO_INITDB_PASSWORD="password"
+MONGO_INITDB_DATABASE="${PROJECT_NAME}"
+FORDWARD_MONGO_PORT=12500
+
+# Mailhog
+FORWARD_MAILHOG_PORT="1025"
+FORWARD_MAILHOG_DASHBOARD_PORT="8025"
 
 # Imprimimos el segundo menu consultando la tecnologia del proyecto
 # Se copia el Dockerfile correspondiente
@@ -61,6 +79,7 @@ case ${TECNOLOGY} in
     "2"|2)
         LARAVEL=1
         mkdir -p "${PWD}/${PROJECT_NAME}/nginx"
+        cp "${DOCKER_ORCHESTRATOR}/laravel_default.conf" "${PWD}/${PROJECT_NAME}/nginx/default.conf"
         ;;
     *)
         echo -n "${WHITE}No informo una opcion valida${NC}\n"
@@ -88,6 +107,11 @@ case ${DATABASE} in
         elif [[ ${NODE} == 1 ]]; then
             cp "${DOCKER_ORCHESTRATOR}/node-mysql/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
         fi
+        echo "MYSQL_DATABASE=${MYSQL_DATABASE}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "MYSQL_USER=${MYSQL_USER}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "MYSQL_PASSWORD=${MYSQL_PASSWORD}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "FORDWARD_MYSQL_PORT=${FORDWARD_MYSQL_PORT}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
         ;;
     "2"|2)
         PGSQL=1
@@ -98,24 +122,50 @@ case ${DATABASE} in
         elif [[ ${NODE} == 1 ]]; then
             cp "${DOCKER_ORCHESTRATOR}/node-pgsql/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
         fi
+        echo "POSTGRES_DATABASE=${POSTGRES_DATABASE}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "POSTGRES_USER=${POSTGRES_USER}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "FORDWARD_PGSQL_PORT=${FORDWARD_PGSQL_PORT}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+
         ;;
     "3"|3)
         MONGODB=1
-        mkdir -p "${PWD}/${PROJECT_NAME}/mongodb"
+        mkdir -p "${PWD}/${PROJECT_NAME}/mongo"
         if [[ ${LARAVEL} == 1 ]]; then
             cp "${DOCKER_ORCHESTRATOR}/laravel-mongodb/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
             cp "${DOCKER_ORCHESTRATOR}/laravel-mysql/Dockerfile" "${PWD}/${PROJECT_NAME}/Dockerfile"
         elif [[ ${NODE} == 1 ]]; then
             cp "${DOCKER_ORCHESTRATOR}/node-mongodb/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
         fi
+        echo "MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "MONGO_INITDB_USERNAME=${MONGO_INITDB_USERNAME}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "MONGO_INITDB_PASSWORD=${MONGO_INITDB_PASSWORD}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "FORDWARD_MONGO_PORT=${FORDWARD_MONGO_PORT}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
         ;;
     *)
         echo -n "${WHITE}No informo una opcion valida${NC}\n"
         exit 0
         ;;
 esac
+#echo "UID=$(id -u)" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+#echo "GID=$(id -g)" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+echo "FORWARD_MAILHOG_PORT=${FORWARD_MAILHOG_PORT}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+echo "FORWARD_MAILHOG_DASHBOARD_PORT=${FORWARD_MAILHOG_DASHBOARD_PORT}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+echo "APP_PORT=${APP_PORT}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+echo "PROJECT_NAME=${PROJECT_NAME}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+echo ".variables_entorno" >> "${PWD}/${PROJECT_NAME}/.gitignore"
+echo ".env" >> "${PWD}/${PROJECT_NAME}/.gitignore"
+echo ".vscode" >> "${PWD}/${PROJECT_NAME}/.gitignore"
 
 delimiter
 
-# TODO crear un archivo env-proyecto que contenga los valores basicos para
-# correr docker-compose
+if [[ ${LARAVEL} == 1 ]]; then
+    cd ${PROJECT_NAME}/src/
+    ${DOCKER_ORCHESTRATOR}/docker-orchestrator.composer create-project laravel/laravel .
+    chmod -R 777 storage
+    cd -
+fi
+
+delimiter
+
+echo -e "${WHITE}Se creo el proyecto ${PROJECT_NAME}${NC}\n"
