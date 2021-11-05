@@ -29,16 +29,18 @@ services:
       - ./mysql:/var/lib/mysql
     networks:
       - laravel
-  phpadmin:
-    image: 'phpmyadmin'
-    container_name: phpmyadmin
+  adminer:
+    build:
+      context: .
+      dockerfile: adminer-dockerfile
+    container_name: adminer
     restart: always
-    environment:
-      - PMA_HOST=mysql
+    links:
+      - mysql
     depends_on:
       - mysql
     ports:
-      - '8080:80'
+      - '8080:8080'
     networks:
       - laravel
   laravel.project:

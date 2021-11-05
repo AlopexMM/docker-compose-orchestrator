@@ -29,6 +29,20 @@ services:
       - ./pgsql:/var/lib/postgresql/data
     networks:
       - laravel
+  adminer:
+    build:
+      context: .
+      dockerfile: adminer-dockerfile
+    container_name: adminer
+    restart: always
+    links:
+      - pgsql
+    depends_on:
+      - pgsql
+    ports:
+      - '8080:8080'
+    networks:
+      - laravel
   laravel.project:
     build:
       context: .

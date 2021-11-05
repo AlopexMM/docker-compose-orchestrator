@@ -27,6 +27,8 @@ if [[ $? == 1 ]]; then
     exit 0
 fi
 
+docker_status
+
 # Imprimimos el primer menu consultando el nombre del proyecto
 # Creamos la carpeta con el nombre del proyecto y la carpeta hija src donde se
 # aloja el codigo de la app
@@ -57,8 +59,8 @@ POSTGRES_PASSWORD="password"
 FORDWARD_PGSQL_PORT="54329"
 
 # Mongodb
-MONGO_INITDB_USERNAME="usuario"
-MONGO_INITDB_PASSWORD="password"
+MONGO_INITDB_ROOT_USERNAME="usuario"
+MONGO_INITDB_ROOT_PASSWORD="password"
 MONGO_INITDB_DATABASE="${PROJECT_NAME}"
 FORDWARD_MONGO_PORT=12500
 
@@ -138,8 +140,8 @@ case ${DATABASE} in
             cp "${DOCKER_ORCHESTRATOR}/node-mongodb/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
         fi
         echo "MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
-        echo "MONGO_INITDB_USERNAME=${MONGO_INITDB_USERNAME}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
-        echo "MONGO_INITDB_PASSWORD=${MONGO_INITDB_PASSWORD}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_PASSWORD}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
         echo "FORDWARD_MONGO_PORT=${FORDWARD_MONGO_PORT}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
         ;;
     *)
@@ -156,14 +158,26 @@ echo "PROJECT_NAME=${PROJECT_NAME}" >> "${PWD}/${PROJECT_NAME}/.variables_entorn
 echo ".variables_entorno" >> "${PWD}/${PROJECT_NAME}/.gitignore"
 echo ".env" >> "${PWD}/${PROJECT_NAME}/.gitignore"
 echo ".vscode" >> "${PWD}/${PROJECT_NAME}/.gitignore"
+cp "${DOCKER_ORCHESTRATOR}/adminer-dockerfile" "${PROJECT_NAME}/"
 
 delimiter
 
 if [[ ${LARAVEL} == 1 ]]; then
-    cd ${PROJECT_NAME}/src/
-    ${DOCKER_ORCHESTRATOR}/docker-orchestrator.composer create-project laravel/laravel .
-    chmod -R 777 storage
-    cd -
+    read -p "Desea que se cree un proyecto laravel con compose? s/n: " response
+    case ${response} in
+        "s"|"S")
+            cd ${PROJECT_NAME}/src/
+            ${DOCKER_ORCHESTRATOR}/docker-orchestrator.composer create-project laravel/laravel .
+            chmod -R 777 storage
+            cd -
+            ;;
+        "n"|"N")
+            echo "Si ya posee un proyecto que desea agregar copie el codigo a la carpeta src dentro de ${PROJECT_NAME}"
+            ;;
+        *)
+            echo "La opcion utilizada no existe"
+            ;;
+    esac
 fi
 
 delimiter

@@ -24,10 +24,6 @@ docker_status
 
 case $1 in
     "up")
-        # Mostramos las variables de entorno que se van a utilizar
-        echo -e "${WHITE}+++++++++++++++++++++++++++++++${NC}\n"
-        cat "${VARIABLES_ENTORNO}"
-        echo -e "${WHITE}+++++++++++++++++++++++++++++++${NC}\n"
         # Exportamos las variables de entorno
         #export_variable
         # Comprueba que no este funcionando un entorno ya
@@ -40,6 +36,11 @@ case $1 in
         if [[ $2 != "" ]]; then
             docker-compose --env-file "${VARIABLES_ENTORNO}" up $2
             docker-compose --env-file "${VARIABLES_ENTORNO}" ps
+            # Mostramos las variables de entorno que se van a utilizar
+            echo -e "${WHITE}+++++++++++++++++++++++++++++++${NC}\n"
+            cat "${VARIABLES_ENTORNO}"
+            echo ""
+            echo -e "${WHITE}+++++++++++++++++++++++++++++++${NC}\n"
         else
             docker-compose --env-file "${VARIABLES_ENTORNO}" up
         fi
