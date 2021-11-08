@@ -20,6 +20,8 @@ Con bases de datos:
 - Postgres
 - MongoDB
 
+En los entornos se incluyen para administrar bases de datos **adminer** y para testing de emails **mailhog**
+
 # Instalacion
 
 Copiar la carpeda docker-orchestrator al HOME de tu equipo y agregar en .bashrc la siguiente linea:
