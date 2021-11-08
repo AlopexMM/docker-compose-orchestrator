@@ -42,6 +42,9 @@ Con que abras una nueva terminal tendras disponibles los comandos:
 
 Con lanzar este comando tendras un menu que te hara una serie de preguntas para poder armar el entorno
 
+> Dentro del proyecto se crea el archivo **.variables_entorno** que contiene toda las variables de entorno que configuran los containers.
+> Ademas agrega **.env** para no compartir por error información de claves del proyecto que puedan desencadenar un problema de seguridad.
+
 # docker-orchestrator.manager
 
 Este comando lo utilizaremos en el root del proyecto para manejar el lanzamiento del entorno de docker
