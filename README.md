@@ -53,6 +53,10 @@ Posee 6 comandos:
 - clean
 - help
 
+# docker-orchestrator.composer
+
+Es utilizado por docker-orchestrator.setup-project si le informamos que deseamos crear un proyecto laravel, este script utiliza una imagen de composer para crear un proyecto laravel.
+
 # Datos de contacto
 
 E-mail: mmori@alopexmm.ar
