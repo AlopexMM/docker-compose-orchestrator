@@ -7,11 +7,16 @@
 DOCKER_ORCHESTRATOR="${HOME}/docker-orchestrator"
 source "${DOCKER_ORCHESTRATOR}/lib"
 VARIABLES_ENTORNO="${PWD}/.variables_entorno"
+OLD_DOCKER_COMPOSE=0
 
 function help_docker-orchestrator(){
     echo "La funciones que actualmente posee docker-orchestrator.manager son:"
     echo ""
     echo -e "${WHITE}up${NC}:\n\tCon este comando tomara los datos de .variables_entorno\n\ty levantara el entorno configurado en ${WHITE}docker-compose.yml${NC}\n\tPor ejemplo:\n\t\t${WHITE}docker-orchestrator.manager up${NC}\n\t\t${WHITE}docker-orchestrator.manager up -d${NC} no muestra el proceso de creacion del entorno y libera la consola para poder seguir usandola\n"
+    echo -e "${WHITE}down${NC}:\n\tCon este comando tomara los datos de .variables_entorno\n\ty dara de baja el entorno configurado en ${WHITE}docker-compose.yml${NC}\n\tPor ejemplo:\n\t\t${WHITE}docker-orchestrator.manager down${NC}\n"
+    echo -e "${WHITE}ps${NC}:\n\tCon este comando tomara los datos de .variables_entorno\n\ty mostrara la informacion del entorno configurado en ${WHITE}docker-compose.yml${NC} que esta corriendo\n\tPor ejemplo:\n\t\t${WHITE}docker-orchestrator.manager ps${NC}\n"
+    echo -e "${WHITE}logs${NC}:\n\tCon este comando tomara los datos de .variables_entorno\n\ty el log del entorno que se encuentra corriendo con esos valores\n\tPor ejemplo:\n\t\t${WHITE}docker-orchestrator.manager logs${NC}\n"
+    echo -e "${WHITE}clean${NC}:\n\tCon este comando se eliminaran todas los containers e imagenes del equipo\n\tPor ejemplo:\n\t\t${WHITE}docker-orchestrator.manager clean${NC}\n"
 }
 
 function export_variable(){
@@ -20,6 +25,7 @@ function export_variable(){
         export ${line}
     done < ${VARIABLES_ENTORNO}
 }
+
 docker_status
 
 case $1 in
@@ -31,6 +37,11 @@ case $1 in
         if docker-compose --env-file "${VARIABLES_ENTORNO}" ps | grep ${PROJECT_NAME} | grep 'Exit'; then
             echo -e "${WHITE}Apagando viejos entornos${NC}"
             docker-compose --env-file "${VARIABLES_ENTORNO}" down > /dev/null 2>&1
+            OLD_DOCKER_COMPOSE=1
+        fi
+
+        if [[ ${OLD_DOCKER_COMPOSE} == 1 ]]; then
+            docker-compose --env-file "${VARIABLES_ENTORNO}" build
         fi
 
         if [[ $2 != "" ]]; then
@@ -50,6 +61,9 @@ case $1 in
         ;;
     "ps")
         docker-compose --env-file "${VARIABLES_ENTORNO}" ps
+        ;;
+    "logs")
+        docker-compose --env-file "${VARIABLES_ENTORNO}" logs
         ;;
     "clean")
         docker rm $(docker ps -qa) 2> /dev/null

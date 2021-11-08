@@ -45,6 +45,9 @@ delimiter
 # Nginx
 APP_PORT="8888"
 
+# Node
+NODE_VERSION="12"
+
 # MySQL
 MYSQL_DATABASE="${PROJECT_NAME}"
 MYSQL_USER="usuario"
@@ -77,11 +80,15 @@ read -p "Informe el nro de la tecnologia: " TECNOLOGY
 case ${TECNOLOGY} in
     "1"|1)
         NODE=1
+        mkdir -p "${PWD}/${PROJECT_NAME}/src"
+        mkdir -p "${PWD}/${PROJECT_NAME}/nginx"
+        cp "${DOCKER_ORCHESTRATOR}/general/node_default.conf" "${PWD}/${PROJECT_NAME}/nginx/default.conf"
+        echo "NODE_VERSION=${NODE_VERSION}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
         ;;
     "2"|2)
         LARAVEL=1
         mkdir -p "${PWD}/${PROJECT_NAME}/nginx"
-        cp "${DOCKER_ORCHESTRATOR}/laravel_default.conf" "${PWD}/${PROJECT_NAME}/nginx/default.conf"
+        cp "${DOCKER_ORCHESTRATOR}/general/laravel_default.conf" "${PWD}/${PROJECT_NAME}/nginx/default.conf"
         ;;
     *)
         echo -n "${WHITE}No informo una opcion valida${NC}\n"
@@ -141,8 +148,9 @@ case ${DATABASE} in
         fi
         echo "MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
         echo "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
-        echo "MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_PASSWORD}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        echo "MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
         echo "FORDWARD_MONGO_PORT=${FORDWARD_MONGO_PORT}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
+        cp "${DOCKER_ORCHESTRATOR}/init-mongo.js" "${PWD}/${PROJECT_NAME}/"
         ;;
     *)
         echo -n "${WHITE}No informo una opcion valida${NC}\n"
@@ -158,7 +166,7 @@ echo "PROJECT_NAME=${PROJECT_NAME}" >> "${PWD}/${PROJECT_NAME}/.variables_entorn
 echo ".variables_entorno" >> "${PWD}/${PROJECT_NAME}/.gitignore"
 echo ".env" >> "${PWD}/${PROJECT_NAME}/.gitignore"
 echo ".vscode" >> "${PWD}/${PROJECT_NAME}/.gitignore"
-cp "${DOCKER_ORCHESTRATOR}/adminer-dockerfile" "${PROJECT_NAME}/"
+cp "${DOCKER_ORCHESTRATOR}/general/adminer-dockerfile" "${PROJECT_NAME}/"
 
 delimiter
 
@@ -178,8 +186,7 @@ if [[ ${LARAVEL} == 1 ]]; then
             echo "La opcion utilizada no existe"
             ;;
     esac
+    delimiter
 fi
-
-delimiter
 
 echo -e "${WHITE}Se creo el proyecto ${PROJECT_NAME}${NC}\n"

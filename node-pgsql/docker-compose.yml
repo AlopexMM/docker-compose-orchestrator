@@ -10,22 +10,22 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - nodeserver
-      - mysql
+      - pgsql
     networks:
       - node
-  mysql:
-    image: 'mysql:5.6'
-    container_name: mysql
+  pgsql:
+    image: 'postgres:14.0'
+    container_name: pgsql
     restart: always
     environment:
-      MYSQL_DATABASE: '${MYSQL_DATABASE}'
-      MYSQL_USER: '${MYSQL_USER}'
-      MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
-      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_DATABASE: '${POSTGRES_DATABASE}'
+      POSTGRES_USER: '${POSTGRES_USER}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
     ports:
-      - '${FORDWARD_MYSQL_PORT}:3306'
+      - '${FORDWARD_PGSQL_PORT}:5432'
     volumes:
-      - ./mysql:/var/lib/mysql
+      - ./pgsql:/var/lib/postgresql/data
     networks:
       - node
   adminer:
@@ -35,9 +35,9 @@ services:
     container_name: adminer
     restart: always
     links:
-      - mysql
+      - pgsql
     depends_on:
-      - mysql
+      - pgsql
     ports:
       - '8080:8080'
     networks:

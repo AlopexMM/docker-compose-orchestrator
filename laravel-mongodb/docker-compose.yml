@@ -25,7 +25,8 @@ services:
     ports:
       - '${FORDWARD_MONGO_PORT}:27017'
     volumes:
-      - ./mongo:/etc/mongo
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./mongo:/data/mongo
     networks:
       - laravel
   adminer:
