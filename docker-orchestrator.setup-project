@@ -11,6 +11,7 @@ MYSQL=0
 PGSQL=0
 MONGODB=0
 NODE=0
+PYTHON=0
 COMMAND=`which docker`
 
 if [[ $? == 1 ]]; then
@@ -76,6 +77,7 @@ FORWARD_MAILHOG_DASHBOARD_PORT="8025"
 echo "Que tecnologia se utilizara en el proyecto?"
 echo -e "[1] ${WHITE}NodeJS${NC}\n"
 echo -e "[2] ${WHITE}Laravel${NC}\n"
+echo -e "[3] ${WHITE}Python${NC}\n"
 read -p "Informe el nro de la tecnologia: " TECNOLOGY
 case ${TECNOLOGY} in
     "1"|1)
@@ -89,6 +91,11 @@ case ${TECNOLOGY} in
         LARAVEL=1
         mkdir -p "${PWD}/${PROJECT_NAME}/nginx"
         cp "${DOCKER_ORCHESTRATOR}/general/laravel_default.conf" "${PWD}/${PROJECT_NAME}/nginx/default.conf"
+        ;;
+    "3"|3)
+        PYTHON=1
+        mkdir -p "${PWD}/${PROJECT_NAME}/nginx"
+        cp "${DOCKER_ORCHESTRATOR}/general/python_default.conf" "${PWD}/${PROJECT_NAME}/nginx/default.conf"
         ;;
     *)
         echo -n "${WHITE}No informo una opcion valida${NC}\n"
@@ -109,12 +116,15 @@ read -p "Informe el nro de la base de datos: " DATABASE
 case ${DATABASE} in
     "1"|1)
         MYSQL=1
-        mkdir -p "${PWD}/${PROJECT_NAME}/mysql"
+        #mkdir -p "${PWD}/${PROJECT_NAME}/mysql"
         if [[ ${LARAVEL} == 1 ]]; then
             cp "${DOCKER_ORCHESTRATOR}/laravel-mysql/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
             cp "${DOCKER_ORCHESTRATOR}/laravel-mysql/Dockerfile" "${PWD}/${PROJECT_NAME}/Dockerfile"
         elif [[ ${NODE} == 1 ]]; then
             cp "${DOCKER_ORCHESTRATOR}/node-mysql/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
+        elif [[ ${PYTHON} == 1 ]]; then
+            cp "${DOCKER_ORCHESTRATOR}/python-mysql/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
+            cp "${DOCKER_ORCHESTRATOR}/python-mysql/python-dockerfile" "${PWD}/${PROJECT_NAME}/"
         fi
         echo "MYSQL_DATABASE=${MYSQL_DATABASE}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
         echo "MYSQL_USER=${MYSQL_USER}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
@@ -130,6 +140,8 @@ case ${DATABASE} in
             cp "${DOCKER_ORCHESTRATOR}/laravel-mysql/Dockerfile" "${PWD}/${PROJECT_NAME}/Dockerfile"
         elif [[ ${NODE} == 1 ]]; then
             cp "${DOCKER_ORCHESTRATOR}/node-pgsql/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
+        elif [[ ${PYTHON} == 1 ]]; then
+            cp "${DOCKER_ORCHESTRATOR}/python-pgsql/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
         fi
         echo "POSTGRES_DATABASE=${POSTGRES_DATABASE}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
         echo "POSTGRES_USER=${POSTGRES_USER}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
@@ -145,6 +157,8 @@ case ${DATABASE} in
             cp "${DOCKER_ORCHESTRATOR}/laravel-mysql/Dockerfile" "${PWD}/${PROJECT_NAME}/Dockerfile"
         elif [[ ${NODE} == 1 ]]; then
             cp "${DOCKER_ORCHESTRATOR}/node-mongodb/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
+        elif [[ ${PYTHON} == 1 ]]; then
+            cp "${DOCKER_ORCHESTRATOR}/python-mongodb/docker-compose.yml" "${PWD}/${PROJECT_NAME}/docker-compose.yml"
         fi
         echo "MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
         echo "MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}" >> "${PWD}/${PROJECT_NAME}/.variables_entorno"
@@ -187,6 +201,12 @@ if [[ ${LARAVEL} == 1 ]]; then
             ;;
     esac
     delimiter
+elif [[ ${PYTHON} == 1 ]]; then
+    cd ${PROJECT_NAME}/
+    python3 -m venv venv
+    sed -i "s/python-network/${PROJECT_NAME}-network/g" docker-compose.yml
+    sed -i "s/python-project/${PROJECT_NAME}/g" docker-compose.yml
+    cd -
 fi
 
 echo -e "${WHITE}Se creo el proyecto ${PROJECT_NAME}${NC}\n"

@@ -17,6 +17,7 @@ function help_docker-orchestrator(){
     echo -e "${WHITE}ps${NC}:\n\tCon este comando tomara los datos de .variables_entorno\n\ty mostrara la informacion del entorno configurado en ${WHITE}docker-compose.yml${NC} que esta corriendo\n\tPor ejemplo:\n\t\t${WHITE}docker-orchestrator.manager ps${NC}\n"
     echo -e "${WHITE}logs${NC}:\n\tCon este comando tomara los datos de .variables_entorno\n\ty el log del entorno que se encuentra corriendo con esos valores\n\tPor ejemplo:\n\t\t${WHITE}docker-orchestrator.manager logs${NC}\n"
     echo -e "${WHITE}clean${NC}:\n\tCon este comando se eliminaran todas los containers e imagenes del equipo\n\tPor ejemplo:\n\t\t${WHITE}docker-orchestrator.manager clean${NC}\n"
+    echo -e "${WHITE}build${NC}:\n\tCon este comando se recrearan los containers que realizan un build a partir de un Dockerfile\n\tPor ejemplo:\n\t\t${WHITE}docker-orchestrator.manager build${NC}\n"
 }
 
 function export_variable(){
@@ -34,6 +35,7 @@ case $1 in
         #export_variable
         # Comprueba que no este funcionando un entorno ya
         export_variable
+
         if docker-compose --env-file "${VARIABLES_ENTORNO}" ps | grep ${PROJECT_NAME} | grep 'Exit'; then
             echo -e "${WHITE}Apagando viejos entornos${NC}"
             docker-compose --env-file "${VARIABLES_ENTORNO}" down > /dev/null 2>&1
@@ -41,6 +43,7 @@ case $1 in
         fi
 
         if [[ ${OLD_DOCKER_COMPOSE} == 1 ]]; then
+            echo -e "${WHITE}Realizando un nuevo build de los contenedores${NC}"
             docker-compose --env-file "${VARIABLES_ENTORNO}" build
         fi
 
@@ -62,12 +65,16 @@ case $1 in
     "ps")
         docker-compose --env-file "${VARIABLES_ENTORNO}" ps
         ;;
+    "build")
+            docker-compose --env-file "${VARIABLES_ENTORNO}" build
+            ;;
     "logs")
         docker-compose --env-file "${VARIABLES_ENTORNO}" logs
         ;;
     "clean")
-        docker rm $(docker ps -qa) 2> /dev/null
-        docker rmi $(docker images -q) 2> /dev/null
+        #docker rm $(docker ps -qa) 2> /dev/null
+        #docker rmi $(docker images -q) 2> /dev/null
+        docker prune -fa # Este comando tambien elimina redes cosa que no estaban contempladas antes
         clear
         echo "Finalizo la limpieza"
         ;;

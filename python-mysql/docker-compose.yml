@@ -1,0 +1,58 @@
+version: '3.0'
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    restart: always
+    ports:
+      - '${APP_PORT}:80'
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - python-project
+      - mysql
+    networks:
+      - python-network
+  mysql:
+    image: 'mysql:5.6'
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: '${MYSQL_DATABASE}'
+      MYSQL_USER: '${MYSQL_USER}'
+      MYSQL_PASSWORD: '${MYSQL_PASSWORD}'
+      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+    ports:
+      - '${FORDWARD_MYSQL_PORT}:3306'
+    volumes:
+      - ./mysql:/var/lib/mysql
+    networks:
+      - python-network
+  adminer:
+    build:
+      context: .
+      dockerfile: adminer-dockerfile
+    container_name: adminer
+    restart: always
+    links:
+      - mysql
+    depends_on:
+      - mysql
+    ports:
+      - '8080:8080'
+    networks:
+      - python-network
+  python-project:
+    build:
+      context: .
+      dockerfile: python-dockerfile
+    container_name: 'python-project'
+    restart: always
+    volumes:
+      - ./src:/app
+    ports:
+      - 9000:80
+    networks:
+      - python-network
+networks:
+  python-network:
